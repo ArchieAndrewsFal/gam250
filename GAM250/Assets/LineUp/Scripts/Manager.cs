@@ -9,53 +9,35 @@ namespace LineUp
         public int testID = 0;
         public string movementData = "";
 
-        private string startNewDataPhp = "185.52.2.95/StartNewData.php?";
-        private string updateDataPhp = "185.52.2.95/UpdateData.php?";
-
-        public string url;
+        private string startNewDataPhp = "185.52.2.95/StartNewData.php";
+        private string updateDataPhp = "185.52.2.95/UpdateData.php";
 
         private void Update()
         {
             if (Input.GetKeyDown(KeyCode.Space))
-                SendData();
+                StartCoroutine(SendData());
 
-            if(Input.GetKeyDown(KeyCode.E))
+                if(Input.GetKeyDown(KeyCode.E))
                 UpdateData();
         }
 
-        void SendData()
+        IEnumerator SendData()
         {
-            StartCoroutine(PostData());
+            WWWForm form = new WWWForm();
+            form.AddField("movementData", movementData);
+
+            WWW postRequest = new WWW(startNewDataPhp, form);
+            yield return postRequest;
+            Debug.Log(postRequest.text);
         }
 
         void UpdateData()
         {
-            StartCoroutine(PostNewData());
-        }
+            WWWForm form = new WWWForm();
+            form.AddField("idToEdit", testID);
+            form.AddField("newMovementData", movementData);
 
-        IEnumerator PostData()
-        {
-            string postString = startNewDataPhp + "movementData=" + movementData;
-            WWW post = new WWW(postString);
-            yield return post; // Get a result and wait for it to ensure the data was sent
-
-            //Log any errors
-            if (post.error != null) 
-                Debug.Log(post.error);
-        }
-
-        IEnumerator PostNewData()
-        {
-            string postString = updateDataPhp + "newMovementData=" + movementData + "&idToEdit=" + testID;
-
-            url = postString;
-
-            WWW post = new WWW(postString);
-            yield return post; // Get a result and wait for it to ensure the data was sent
-
-            //Log any errors
-            if (post.error != null)
-                Debug.Log(post.error);
+            WWW postRequest = new WWW(updateDataPhp, form);
         }
     }
 }
