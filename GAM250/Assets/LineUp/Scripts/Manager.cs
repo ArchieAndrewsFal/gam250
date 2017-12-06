@@ -6,27 +6,56 @@ namespace LineUp
 {
     public class Manager : MonoBehaviour
     {
-        public string newName = "Test";
+        public int testID = 0;
+        public string movementData = "";
 
-        private string createTableURL = "http://185.52.2.95/StartNewData.php";
+        private string startNewDataPhp = "185.52.2.95/StartNewData.php?";
+        private string updateDataPhp = "185.52.2.95/UpdateData.php?";
 
-        void Update()
+        public string url;
+
+        private void Update()
         {
             if (Input.GetKeyDown(KeyCode.Space))
-            {
-                StartCoroutine(CreateNewTable());
-            }
+                SendData();
+
+            if(Input.GetKeyDown(KeyCode.E))
+                UpdateData();
         }
 
-
-        IEnumerator CreateNewTable()
+        void SendData()
         {
-            string post = createTableURL + "tableName=" + WWW.EscapeURL(newName);
-            WWW tablePost = new WWW(post);
-            yield return tablePost;
+            StartCoroutine(PostData());
+        }
 
-            if (tablePost.error != null)
-                Debug.Log("Ding Table Ready");
+        void UpdateData()
+        {
+            StartCoroutine(PostNewData());
+        }
+
+        IEnumerator PostData()
+        {
+            string postString = startNewDataPhp + "movementData=" + movementData;
+            WWW post = new WWW(postString);
+            yield return post; // Get a result and wait for it to ensure the data was sent
+
+            //Log any errors
+            if (post.error != null) 
+                Debug.Log(post.error);
+        }
+
+        IEnumerator PostNewData()
+        {
+            string postString = updateDataPhp + "newMovementData=" + movementData + "&idToEdit=" + testID;
+
+            url = postString;
+
+            WWW post = new WWW(postString);
+            yield return post; // Get a result and wait for it to ensure the data was sent
+
+            //Log any errors
+            if (post.error != null)
+                Debug.Log(post.error);
         }
     }
 }
