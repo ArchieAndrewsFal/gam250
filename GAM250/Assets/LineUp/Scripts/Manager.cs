@@ -75,7 +75,6 @@ namespace LineUp
                 json += "|" + JsonUtility.ToJson(v);
             }
 
-            Debug.Log(json);
             return json;
         }
 

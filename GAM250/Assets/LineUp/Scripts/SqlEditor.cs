@@ -1,13 +1,13 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace LineUp
 {
+    [ExecuteInEditMode]
     public class SqlEditor : MonoBehaviour
     {
-        public static string startNewDataPhp = "185.52.2.95/StartNewData.php";    //Store the location of the start new data php script on the sql server
-        public static string updateDataPhp = "185.52.2.95/UpdateData.php";    //Store the location of the update data php script on the sql server
+        public string publicResult = "";
+
 
         public void CreateNewData(string startingMovmentData, MovmentData newData)
         {
@@ -19,7 +19,7 @@ namespace LineUp
             WWWForm form = new WWWForm(); //Create an empty form to post to the php script
             form.AddField("movementData", startingMovmentData); //Add the starting movement data to the form
 
-            WWW postRequest = new WWW(startNewDataPhp, form); //Post the form to the php script
+            WWW postRequest = new WWW(LineUpSqlSettings.startNewDataPhp, form); //Post the form to the php script
 
             yield return postRequest; //Wait for the script to finish downloading 
 
@@ -35,7 +35,7 @@ namespace LineUp
             form.AddField("idToEdit", testID); //Add the stored id we got from the sql database to the form. We use this to grab the same row to edit
             form.AddField("newMovementData", movementData); //Add the new movement data to the form
 
-            new WWW(updateDataPhp, form); //Post the form to the php script
+            new WWW(LineUpSqlSettings.updateDataPhp, form); //Post the form to the php script
         }
     }
 }
