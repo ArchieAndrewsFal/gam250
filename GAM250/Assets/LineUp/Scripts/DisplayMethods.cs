@@ -8,6 +8,10 @@ namespace LineUp
         public static List<string> sessionId = new List<string>();
         public static List<List<Vector3>> sessionsMovmentData = new List<List<Vector3>>();
 
+        //Create an event for when the movment data is finished loading so we can re draw the scene in Viewer.cs
+        public delegate void FinishedCreatingMovementData();
+        public static event FinishedCreatingMovementData onFinishedMovmentData;
+
         public static void SeperateAndStoreResults(string text)
         {
             char[] separators = { '#' }; //Define all the characters we want to use to seperate the string we recive from the php script
@@ -20,6 +24,9 @@ namespace LineUp
                     break;
                 case "[MovementData]": //If the first string is the movement data tag then sort the data into the movment data list
                     SetUpMovementDataSessions(results);
+                    break;
+                case "Error":
+                    Debug.LogError(results[1]);
                     break;
             }
         }
@@ -63,6 +70,9 @@ namespace LineUp
                     sessionsMovmentData[i].Add(point); //Add the result to the sessions list
                 }
             }
+
+            if (onFinishedMovmentData != null)
+                onFinishedMovmentData();
         }
 
         public static Vector3 GetVector3FromJson(string json)

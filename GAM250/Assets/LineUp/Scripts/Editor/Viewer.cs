@@ -20,12 +20,16 @@ namespace LineUp
 
         void OnFocus()    // Window has been selected
         {
-            SceneView.onSceneGUIDelegate -= this.OnSceneGUI; // Remove delegate listener if it has previously been assigned.
-            SceneView.onSceneGUIDelegate += this.OnSceneGUI; // Add (or re-add) the delegate.
+            SceneView.onSceneGUIDelegate -= OnSceneGUI; // Remove delegate listener if it has previously been assigned.
+            SceneView.onSceneGUIDelegate += OnSceneGUI; // Add (or re-add) the delegate.
+
+            DisplayMethods.onFinishedMovmentData -= RunRepaint;
+            DisplayMethods.onFinishedMovmentData += RunRepaint;
         }
 
         private void OnDestroy()
         {
+            DisplayMethods.onFinishedMovmentData -= RunRepaint;
             SceneView.onSceneGUIDelegate -= this.OnSceneGUI;
         }
 
@@ -40,25 +44,38 @@ namespace LineUp
             EditorGUILayout.BeginHorizontal("box");
 
             if (GUILayout.Button("Show All Data (First 100)"))
-                GetData(100, "limit", LineUpSqlSettings.getDataByCountPhp); //Grab the first 100 rows session numbers
+                GetData(100.ToString(), "", "limit", LineUpSqlSettings.getDataWithFilter); //Grab the first 100 rows session numbers
 
             EditorGUILayout.EndHorizontal();
         }
 
         void DrawMain()
         {
-            EditorGUILayout.BeginVertical("box");
-            DrawAvailableSessions();
-            EditorGUILayout.EndVertical();
+            if (isWaiting)
+            {
+                GUILayout.Label("Loading");
+            }
+            else
+            {
+                DrawAvailableSessions();
+            }
         }
 
         void DrawAvailableSessions()
         {
+            EditorGUILayout.BeginVertical("box");
+            if (DisplayMethods.sessionId.Count > 0 && GUILayout.Button("Load All Sessions"))
+            {
+                LoadAllSessions();
+            }
+
             foreach (string id in DisplayMethods.sessionId)
             {
                 if (GUILayout.Button("Load Session: [" + id + "]")) //Create a button for each session displayed
                     LoadSession(id);
             }
+
+            EditorGUILayout.EndVertical();
         }
 
         void OnSceneGUI(SceneView sceneView)
@@ -78,12 +95,16 @@ namespace LineUp
             }
         }
 
-        public void GetData(int value, string formField, string phpScript)
+        public void GetData(string filter1, string filter2, string filterType, string phpScript)
         {
             WWWForm form = new WWWForm(); //Create an empty form to post to the php script
-            form.AddField(formField, value); //Set the value and form field name
+            form.AddField("filterType", filterType); //Set the value and form field name
+            form.AddField("filter1", filter1); //Set the value and form field name
+            form.AddField("filter2", filter2); //Set the value and form field name
 
             editorWWW = new WWW(phpScript, form); //Post the form to the php script
+
+            Debug.Log(filter1);
 
             isWaiting = true; //Set this so we now know to check if the result has downloaded in Update
         }
@@ -92,18 +113,27 @@ namespace LineUp
         {
             if (editorWWW != null && editorWWW.isDone && isWaiting) //Using this instead of a coroutine as they can't be run in editor
             {
+                Debug.Log(editorWWW.text);
+
                 isWaiting = false; //Now the method has run we can stop checking if the download is complete
                 DisplayMethods.SeperateAndStoreResults(editorWWW.text);
+                Repaint(); //Repaint to get rid of the loading sign
             }
         }
 
         void LoadSession(string id)
         {
-            int idAsInt = 0;
-            int.TryParse(id, out idAsInt);
+            GetData(id, "", "sessionId", LineUpSqlSettings.getDataWithFilter);
+        }
 
-            if (idAsInt != 0)
-                GetData(idAsInt, "sessionId", LineUpSqlSettings.getDataBySessionId);
+        void LoadAllSessions()
+        {
+            GetData(DisplayMethods.sessionId[0], DisplayMethods.sessionId[DisplayMethods.sessionId.Count - 1], "range", LineUpSqlSettings.getDataWithFilter);
+        }
+
+        void RunRepaint()
+        {
+            SceneView.RepaintAll();
         }
     }
 }
