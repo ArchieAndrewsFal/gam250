@@ -72,7 +72,7 @@ namespace LineUp
 
             foreach (Vector3 v in movement)
             {
-                json += "|" + JsonUtility.ToJson(v);
+                json += JsonUtility.ToJson(v) + "|";
             }
 
             return json;
