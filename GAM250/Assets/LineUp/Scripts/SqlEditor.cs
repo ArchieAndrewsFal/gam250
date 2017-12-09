@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
+using System;
 
 namespace LineUp
 {
@@ -11,13 +12,15 @@ namespace LineUp
 
         public void CreateNewData(string startingMovmentData, MovmentData newData)
         {
-            StartCoroutine(SendData(startingMovmentData, newData));
+            StartCoroutine(SendData(startingMovmentData, newData, DateTime.Now));
         }
 
-        IEnumerator SendData(string startingMovmentData, MovmentData newData)
+        IEnumerator SendData(string startingMovmentData, MovmentData newData, DateTime date)
         {
             WWWForm form = new WWWForm(); //Create an empty form to post to the php script
             form.AddField("movementData", startingMovmentData); //Add the starting movement data to the form
+            string dateString = date.Year + "-" + date.Month + "-" + date.Day; //Put the date into the format that an SQL reads e.g. YYYY/MM/DD
+            form.AddField("date", dateString);
 
             WWW postRequest = new WWW(LineUpSqlSettings.startNewDataPhp, form); //Post the form to the php script
 

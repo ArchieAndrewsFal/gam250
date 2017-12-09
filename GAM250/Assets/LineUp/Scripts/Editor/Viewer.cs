@@ -11,6 +11,12 @@ namespace LineUp
         WWW editorWWW = null;
         public static bool isWaiting = false;
 
+        int count = 10;
+        int start = 0, end = 100;
+        string date = "";
+        string startDate = "", endDate = "";
+        FilterTypes filterTypes;
+
         [MenuItem("Line Up/Viewer")]
         public static void Init()
         {
@@ -36,6 +42,20 @@ namespace LineUp
         private void OnGUI()
         {
             DrawTopBar();
+
+            switch (filterTypes)
+            {
+                case FilterTypes.limit:
+                    DrawGetByCount();
+                    break;
+
+                case FilterTypes.date:
+                    DrawGetByDate();
+                    break;
+            }
+
+            GUILayout.Space(10);
+
             DrawMain();
         }
 
@@ -43,10 +63,89 @@ namespace LineUp
         {
             EditorGUILayout.BeginHorizontal("box");
 
-            if (GUILayout.Button("Show All Data (First 100)"))
-                GetData(100.ToString(), "", "limit", LineUpSqlSettings.getDataWithFilter); //Grab the first 100 rows session numbers
+            if (GUILayout.Button("Get Data By Count"))
+            {
+                filterTypes = FilterTypes.limit;
+                DisplayMethods.sessionId.Clear();
+                DisplayMethods.sessionsMovmentData.Clear();
+            }
+
+            if (GUILayout.Button("Get Data By Date"))
+            {
+                filterTypes = FilterTypes.date;
+                DisplayMethods.sessionId.Clear();
+                DisplayMethods.sessionsMovmentData.Clear();
+            }
+
+            if (GUILayout.Button("Get Data By Tag"))
+            {
+                filterTypes = FilterTypes.tag;
+                DisplayMethods.sessionId.Clear();
+                DisplayMethods.sessionsMovmentData.Clear();
+            }
 
             EditorGUILayout.EndHorizontal();
+        }
+
+        void DrawGetByCount()
+        {
+            EditorGUILayout.BeginVertical();
+
+            //Start load count
+            EditorGUILayout.BeginHorizontal("box");
+            GUILayout.Label("Count");
+            count = EditorGUILayout.IntField(count);
+
+            if (GUILayout.Button("Get First[" + count + "] Sessions"))
+                GetData(count.ToString(), "", "limit", LineUpSqlSettings.getDataWithFilter); //Grab the first x amount of row session numbers
+            EditorGUILayout.EndHorizontal();
+            //End load count ####
+
+            //Start load range
+            EditorGUILayout.BeginHorizontal("box");
+            GUILayout.Label("Range");
+            start = EditorGUILayout.IntField(start);
+            GUILayout.Label("-");
+            end = EditorGUILayout.IntField(end);
+
+            if (GUILayout.Button("Get Sessions Between [" + start + "]and[" + end + "]"))
+                GetData(start.ToString(), end.ToString(), FilterTypes.sessionRange.ToString(), LineUpSqlSettings.getDataWithFilter); //Grab sessions between two id's
+            EditorGUILayout.EndHorizontal();
+            //End load range
+
+            EditorGUILayout.EndVertical();
+        }
+
+        void DrawGetByDate()
+        {
+            EditorGUILayout.BeginVertical();
+
+            EditorGUILayout.BeginHorizontal("box");
+
+            if (GUILayout.Button("Change Date"))
+                DatePopUp.Init(this, "Date");
+
+                if (GUILayout.Button("Get Sessions From [" + date +"]"))
+                GetData(date, "", FilterTypes.date.ToString(), LineUpSqlSettings.getDataWithFilter); //Grab sessions from the defined date
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.BeginHorizontal("box");
+            if (GUILayout.Button("Change Start Date"))
+                DatePopUp.Init(this, "StartDate");
+
+            if (GUILayout.Button("Change End Date"))
+                DatePopUp.Init(this, "EndDate");
+
+            if (GUILayout.Button("Get Sessions Between [" + startDate + "] And [" + endDate + "]"))
+                GetData(startDate, endDate, FilterTypes.dateRange.ToString(), LineUpSqlSettings.getDataWithFilter); //Grab sessions between two date's
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.EndVertical();
+        }
+
+        void DrawGetByTag()
+        {
+
         }
 
         void DrawMain()
@@ -97,14 +196,13 @@ namespace LineUp
 
         public void GetData(string filter1, string filter2, string filterType, string phpScript)
         {
+            Debug.Log(filter1);
             WWWForm form = new WWWForm(); //Create an empty form to post to the php script
             form.AddField("filterType", filterType); //Set the value and form field name
             form.AddField("filter1", filter1); //Set the value and form field name
             form.AddField("filter2", filter2); //Set the value and form field name
 
             editorWWW = new WWW(phpScript, form); //Post the form to the php script
-
-            Debug.Log(filter1);
 
             isWaiting = true; //Set this so we now know to check if the result has downloaded in Update
         }
@@ -113,8 +211,6 @@ namespace LineUp
         {
             if (editorWWW != null && editorWWW.isDone && isWaiting) //Using this instead of a coroutine as they can't be run in editor
             {
-                Debug.Log(editorWWW.text);
-
                 isWaiting = false; //Now the method has run we can stop checking if the download is complete
                 DisplayMethods.SeperateAndStoreResults(editorWWW.text);
                 Repaint(); //Repaint to get rid of the loading sign
@@ -134,6 +230,22 @@ namespace LineUp
         void RunRepaint()
         {
             SceneView.RepaintAll();
+        }
+
+        public void ReciveDate(string callType, string newDate)
+        {
+            switch (callType)
+            {
+                case "Date":
+                    date = newDate;
+                    break;
+                case "StartDate":
+                    startDate = newDate;
+                    break;
+                case "EndDate":
+                    endDate = newDate;
+                    break;
+            }
         }
     }
 }

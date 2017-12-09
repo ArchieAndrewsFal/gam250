@@ -14,6 +14,9 @@ namespace LineUp
 
         public List<MovmentData> activeTrackers = new List<MovmentData>(); //This list stores all of the active trackers sending data to the server
         private SqlEditor sql;
+        private WaitUntil delay;
+        private float distance = 0;
+        int frameCounter = 0;
 
         private void Awake()
         {
@@ -21,6 +24,7 @@ namespace LineUp
             CheckForSettings();
             SetUpSqlRefrence();
 
+            delay = new WaitUntil(() => frameCounter >= settings.framesBetweenCycles);
             StartCoroutine(Cycle()); //Start the cycle
         }
 
@@ -57,26 +61,31 @@ namespace LineUp
             MovmentData newTracker = new MovmentData(); //Create empty movement data to fill with new information
 
             newTracker.transformToTrack = tracker; //Set the transform we want to track
-            newTracker.movmentData = new List<Vector3>(); //Set up the list
-            newTracker.movmentData.Add(tracker.position); //Add the first point to our movment data
+            newTracker.lastRecordedPosition = tracker.position;
+            newTracker.movementString = JsonPosition(newTracker);
 
             //Create the new row in the sql for this data. Also pass the movment data so it can set the id the sql created for it.
-            sql.CreateNewData(CreateJsonFromMovementData(newTracker.movmentData.ToArray()), newTracker);
+            sql.CreateNewData(newTracker.movementString, newTracker);
 
             activeTrackers.Add(newTracker);
         }
 
-        string CreateJsonFromMovementData(Vector3[] movement)
+        string JsonPosition(MovmentData tracker)
         {
-            string json = "";
-
-            foreach (Vector3 v in movement)
-            {
-                json += JsonUtility.ToJson(v) + "|";
-            }
-
-            return json;
+            return JsonUtility.ToJson(tracker.lastRecordedPosition) + "|";
         }
+
+        //string CreateJsonFromMovementData(Vector3[] movement)
+        //{
+        //    string json = "";
+
+        //    for (int i = 0; i < movement.Length; i++)
+        //    {
+        //        json += JsonUtility.ToJson(movement[i]) + "|";
+        //    }
+
+        //    return json;
+        //}
 
         public void EndTracker(Transform tracker)
         {
@@ -98,21 +107,25 @@ namespace LineUp
                     if(activeTrackers[i].transformToTrack != null) //Check if the tracker was remove last frame
                         CheckTrackerForUpdate(activeTrackers[i]);
                 }
-                yield return new WaitForSeconds(settings.cycleTime);
+                yield return delay;
+                frameCounter = 0;
             }
+        }
+
+        private void Update()
+        {
+            frameCounter++;
         }
 
         void CheckTrackerForUpdate(MovmentData tracker)
         {
-            float distance = Vector3.Distance(tracker.transformToTrack.position, tracker.movmentData[tracker.movmentData.Count - 1]); //Get the distance between the last recorded point and the active point
+            distance = Vector3.Distance(tracker.transformToTrack.position, tracker.lastRecordedPosition); //Get the distance between the last recorded point and the active point
 
             if (distance >= settings.distanceToRecord) //Check if the distance between the last recorded point and the current point is large enough to record a new point
             {
-                tracker.movmentData.Add(tracker.transformToTrack.position); //Add the position to the movment data
-
-                //JSON the movment data
-
-                sql.UpdateData(tracker.id, CreateJsonFromMovementData(tracker.movmentData.ToArray())); //Update the row in the sql
+                tracker.lastRecordedPosition = tracker.transformToTrack.position;
+                tracker.movementString += JsonPosition(tracker);
+                sql.UpdateData(tracker.id, tracker.movementString); //Update the row in the sql
             }
         }
 

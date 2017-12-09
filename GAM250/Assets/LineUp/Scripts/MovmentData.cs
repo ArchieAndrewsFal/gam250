@@ -8,6 +8,7 @@ namespace LineUp
     {
         public int id;
         public Transform transformToTrack;
-        public List<Vector3> movmentData;
+        public string movementString;
+        public Vector3 lastRecordedPosition;
     }
 }
