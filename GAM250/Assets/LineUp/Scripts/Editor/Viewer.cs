@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEditor;
 
 namespace LineUp
@@ -8,9 +6,10 @@ namespace LineUp
     [ExecuteInEditMode]
     public class Viewer : EditorWindow
     {
-        WWW editorWWW = null;
+        WWW editorWWW = null; //This is defined out side a method so we can check when it has downloaded in Update
         public static bool isWaiting = false;
 
+        //Filters
         int count = 10;
         int start = 0, end = 100;
         string date = "";
@@ -42,8 +41,9 @@ namespace LineUp
 
         private void OnGUI()
         {
-            DrawTopBar();
+            DrawTopBar(); //Draw the filter selection buttons
 
+            //Draw the filter gui elements
             switch (filterTypes)
             {
                 case FilterTypes.limit:
@@ -58,30 +58,30 @@ namespace LineUp
                     break;
             }
 
-            GUILayout.Space(10);
+            GUILayout.Space(50);
 
-            DrawMain();
+            DrawMain(); //Draw the sessions we have access too based on the filters
         }
 
         void DrawTopBar()
         {
             EditorGUILayout.BeginHorizontal("box");
 
-            if (GUILayout.Button("Get Data By Count"))
+            if (GUILayout.Button("Get Data By Count") && filterTypes != FilterTypes.limit)
             {
-                filterTypes = FilterTypes.limit;
-                DisplayMethods.sessionId.Clear();
+                filterTypes = FilterTypes.limit; //Change the active filter so we know to draw the correct buttons and fields
+                DisplayMethods.sessionId.Clear(); //Clear the static sessions we have stored from the last filter set
                 DisplayMethods.sessionsMovmentData.Clear();
             }
 
-            if (GUILayout.Button("Get Data By Date"))
+            if (GUILayout.Button("Get Data By Date") && filterTypes != FilterTypes.date)
             {
                 filterTypes = FilterTypes.date;
                 DisplayMethods.sessionId.Clear();
                 DisplayMethods.sessionsMovmentData.Clear();
             }
 
-            if (GUILayout.Button("Get Data By Tag"))
+            if (GUILayout.Button("Get Data By Tag") && filterTypes != FilterTypes.sessionTag)
             {
                 filterTypes = FilterTypes.sessionTag;
                 DisplayMethods.sessionId.Clear();
@@ -98,7 +98,7 @@ namespace LineUp
             //Start load count
             EditorGUILayout.BeginHorizontal("box");
             GUILayout.Label("Count");
-            count = EditorGUILayout.IntField(count);
+            count = EditorGUILayout.IntField(count); //Set the count from the int field
 
             if (GUILayout.Button("Get First[" + count + "] Sessions"))
                 GetData(count.ToString(), "", "limit", LineUpSqlSettings.getDataWithFilter); //Grab the first x amount of row session numbers
@@ -127,7 +127,7 @@ namespace LineUp
             EditorGUILayout.BeginHorizontal("box");
 
             if (GUILayout.Button("Change Date"))
-                DatePopUp.Init(this, "Date");
+                DatePopUp.Init(this, "Date"); //Call the date pop up window and set the tag for it to send the data back to
 
                 if (GUILayout.Button("Get Sessions From [" + date +"]"))
                 GetData(date, "", FilterTypes.date.ToString(), LineUpSqlSettings.getDataWithFilter); //Grab sessions from the defined date
@@ -165,7 +165,7 @@ namespace LineUp
         {
             if (isWaiting)
             {
-                GUILayout.Label("Loading");
+                GUILayout.Label("Loading"); //While waiting print loading... so the user knows that the button they just pressed did somthing
             }
             else
             {
@@ -231,19 +231,20 @@ namespace LineUp
 
         void LoadSession(string id)
         {
-            GetData(id, "", "sessionId", LineUpSqlSettings.getDataWithFilter);
+            GetData(id, "", FilterTypes.sessionId.ToString(), LineUpSqlSettings.getDataWithFilter);
         }
 
         void LoadAllSessions()
         {
-            GetData(DisplayMethods.sessionId[0], DisplayMethods.sessionId[DisplayMethods.sessionId.Count - 1], "range", LineUpSqlSettings.getDataWithFilter);
+            GetData(DisplayMethods.sessionId[0], DisplayMethods.sessionId[DisplayMethods.sessionId.Count - 1], FilterTypes.range.ToString(), LineUpSqlSettings.getDataWithFilter);
         }
 
         void RunRepaint()
         {
-            SceneView.RepaintAll();
+            SceneView.RepaintAll(); //Repaint the scene view so we can draw the movement lines when the scene isn't in focus
         }
 
+        //Get the data from the calender pop up using the tag we sent it off with
         public void ReciveDate(string callType, string newDate)
         {
             switch (callType)

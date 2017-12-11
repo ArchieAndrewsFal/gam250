@@ -72,9 +72,10 @@ namespace LineUp
 
         string JsonPosition(MovmentData tracker)
         {
-            return JsonUtility.ToJson(tracker.lastRecordedPosition) + "|";
+            return JsonUtility.ToJson(tracker.lastRecordedPosition) + "|"; //Add the vertical bar after we create the JSON so we can seperate it later on
         }
 
+        //Removed this as it was creating too much GC
         //string CreateJsonFromMovementData(Vector3[] movement)
         //{
         //    string json = "";
