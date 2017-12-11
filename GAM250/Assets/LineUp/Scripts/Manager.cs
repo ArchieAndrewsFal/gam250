@@ -56,7 +56,7 @@ namespace LineUp
             }
         }
 
-        public void StartTracker(Transform tracker)
+        public void StartTracker(Transform tracker, string tag = "")
         {
             MovmentData newTracker = new MovmentData(); //Create empty movement data to fill with new information
 
@@ -65,7 +65,7 @@ namespace LineUp
             newTracker.movementString = JsonPosition(newTracker);
 
             //Create the new row in the sql for this data. Also pass the movment data so it can set the id the sql created for it.
-            sql.CreateNewData(newTracker.movementString, newTracker);
+            sql.CreateNewData(newTracker.movementString, newTracker, tag);
 
             activeTrackers.Add(newTracker);
         }

@@ -3,9 +3,11 @@ using LineUp;
 
 public class SimpleTracker : MonoBehaviour
 {
-    private void Start()
+    public string trackerTag = "";
+
+    private void OnEnable()
     {
-        Manager.tracker.StartTracker(transform);
+        Manager.tracker.StartTracker(transform, trackerTag);
     }
 
     private void OnDestroy()

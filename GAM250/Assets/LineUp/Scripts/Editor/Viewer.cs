@@ -15,6 +15,7 @@ namespace LineUp
         int start = 0, end = 100;
         string date = "";
         string startDate = "", endDate = "";
+        string sessionTag = "";
         FilterTypes filterTypes;
 
         [MenuItem("Line Up/Viewer")]
@@ -52,6 +53,9 @@ namespace LineUp
                 case FilterTypes.date:
                     DrawGetByDate();
                     break;
+                case FilterTypes.sessionTag:
+                    DrawGetByTag();
+                    break;
             }
 
             GUILayout.Space(10);
@@ -79,7 +83,7 @@ namespace LineUp
 
             if (GUILayout.Button("Get Data By Tag"))
             {
-                filterTypes = FilterTypes.tag;
+                filterTypes = FilterTypes.sessionTag;
                 DisplayMethods.sessionId.Clear();
                 DisplayMethods.sessionsMovmentData.Clear();
             }
@@ -145,7 +149,16 @@ namespace LineUp
 
         void DrawGetByTag()
         {
+            EditorGUILayout.BeginVertical();
 
+            EditorGUILayout.BeginHorizontal("box");
+            GUILayout.Label("Tag");
+            sessionTag = GUILayout.TextField(sessionTag);
+            if(GUILayout.Button("Load By Tag"))
+                GetData(sessionTag, "", FilterTypes.sessionTag.ToString(), LineUpSqlSettings.getDataWithFilter); //Grab sessions with a tag
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.EndVertical();
         }
 
         void DrawMain()
@@ -196,7 +209,6 @@ namespace LineUp
 
         public void GetData(string filter1, string filter2, string filterType, string phpScript)
         {
-            Debug.Log(filter1);
             WWWForm form = new WWWForm(); //Create an empty form to post to the php script
             form.AddField("filterType", filterType); //Set the value and form field name
             form.AddField("filter1", filter1); //Set the value and form field name
